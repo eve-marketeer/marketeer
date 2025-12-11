@@ -55,10 +55,15 @@ jobs:
       - name: Verify Certificate
         if: matrix.platform == 'macos-latest'
         run: |
-          CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Apple Development")
-          CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning build.keychain
+          CERT_ID=$(security find-identity -v -p codesigning build.keychain | grep -o '"[^"]*"' | head -1 | tr -d '"')
+          if [ -z "$CERT_ID" ]; then
+            echo "Error: No signing identity found"
+            exit 1
+          fi
+          echo "Using certificate: $CERT_ID"
           echo "APPLE_SIGNING_IDENTITY=$CERT_ID" >> $GITHUB_ENV
-          echo "Certificate imported."
 
       - name: setup node
         uses: actions/setup-node@v4
