@@ -1,0 +1,32 @@
+[package]
+name = "marketeer"
+version = "0.1.0"
+description = "Marketeer - EVE Online Market Tool"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "marketeer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-os = "2"
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clipboard-rs = "0.3.1"
+notify = "7"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["full"] }
+dirs = "6"
+csv = "1.3"
+chrono = { version = "0.4", features = ["serde"] }
+once_cell = "1.20"
+parking_lot = "0.12"
+regex = "1.11"

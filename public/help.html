@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Marketeer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, oklch(0.12 0.02 260) 0%, oklch(0.10 0.015 280) 100%);
+      color: oklch(0.95 0 0);
+      min-height: 100vh;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .container {
+      padding: 32px;
+      max-width: 100%;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, oklch(0.7 0.2 145) 0%, oklch(0.6 0.18 145) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 32px oklch(0.7 0.2 145 / 0.3);
+    }
+    
+    .logo svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+    
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, oklch(0.95 0 0) 0%, oklch(0.7 0.2 145) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .version {
+      font-size: 0.75rem;
+      color: oklch(0.5 0 0);
+      font-weight: 500;
+    }
+    
+    .tagline {
+      font-size: 0.875rem;
+      color: oklch(0.65 0 0);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    
+    .section {
+      background: oklch(0.16 0.015 260 / 0.8);
+      border: 1px solid oklch(0.25 0.02 260);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    
+    .section.inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+    }
+    
+    .section.inline h2 {
+      margin-bottom: 0;
+    }
+    
+    h2 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: oklch(0.5 0 0);
+      margin-bottom: 12px;
+    }
+    
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    
+    .step-number {
+      width: 24px;
+      height: 24px;
+      background: oklch(0.7 0.2 145 / 0.15);
+      color: oklch(0.7 0.2 145);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    
+    .step-text {
+      font-size: 0.8125rem;
+      color: oklch(0.8 0 0);
+      line-height: 1.5;
+    }
+    
+    .step-text strong {
+      color: oklch(0.95 0 0);
+      font-weight: 600;
+    }
+    
+    .shortcut {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .shortcut-desc {
+      font-size: 0.8125rem;
+      color: oklch(0.75 0 0);
+    }
+    
+    .shortcut-keys {
+      display: flex;
+      gap: 4px;
+    }
+    
+    kbd {
+      background: oklch(0.22 0.015 260);
+      border: 1px solid oklch(0.3 0.02 260);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      color: oklch(0.85 0 0);
+      box-shadow: 0 1px 0 oklch(0.15 0.01 260);
+    }
+    
+    .price-modes {
+      display: flex;
+      gap: 24px;
+    }
+    
+    .price-mode {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .price-mode-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .price-mode.sell .price-mode-title {
+      color: oklch(0.7 0.2 145);
+    }
+    
+    .price-mode.buy .price-mode-title {
+      color: oklch(0.75 0.18 55);
+    }
+    
+    .price-mode-desc {
+      font-size: 0.75rem;
+      color: oklch(0.6 0 0);
+    }
+    
+    .footer {
+      text-align: center;
+      padding-top: 16px;
+    }
+    
+    .footer-text {
+      font-size: 0.6875rem;
+      color: oklch(0.4 0 0);
+      margin-bottom: 8px;
+    }
+    
+    .footer a {
+      color: oklch(0.6 0.15 145);
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    .footer a:hover {
+      color: oklch(0.7 0.2 145);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <h1>Marketeer</h1>
+      <span class="version">Version 0.1.0</span>
+      <p class="tagline">A market companion for EVE Online that watches your exports and copies competitive prices to your clipboard.</p>
+    </div>
+    
+    <div class="section">
+      <h2>How to Use</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">1</span>
+          <span class="step-text">Open the <strong>Market window</strong> in EVE Online and search for an item</span>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <span class="step-text">Click the <strong>Export to File</strong> button in the market window menu</span>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <span class="step-text">Marketeer <strong>automatically detects</strong> the export and copies the adjusted price</span>
+        </div>
+        <div class="step">
+          <span class="step-number">4</span>
+          <span class="step-text"><strong>Paste</strong> directly into EVE's price field</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section inline">
+      <h2>Toggle Mode</h2>
+      <div class="shortcut-keys">
+        <kbd>⌘</kbd>
+        <kbd>M</kbd>
+      </div>
+    </div>
+    
+    <div class="section inline">
+      <h2>Price Adjustment</h2>
+      <div class="price-modes">
+        <div class="price-mode sell">
+          <span class="price-mode-title">Sell</span>
+          <span class="price-mode-desc">undercuts lowest</span>
+        </div>
+        <div class="price-mode buy">
+          <span class="price-mode-title">Buy</span>
+          <span class="price-mode-desc">outbids highest</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p class="footer-text">Built with Tauri + Vue</p>
+      <a href="https://github.com/eve-marketeer/marketeer" target="_blank">github.com/eve-marketeer/marketeer</a>
+    </div>
+  </div>
+</body>
+</html>
