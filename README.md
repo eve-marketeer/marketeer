@@ -7,6 +7,9 @@ A desktop market tool for EVE Online that automatically monitors your market exp
 ![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+<img width="1256" height="982" alt="Screenshot 2025-12-11 at 14 58 47" src="https://github.com/user-attachments/assets/dc43fd00-0205-4d24-acc2-584a02d3c846" />
+
+
 ## Features
 
 - **Automatic Market Log Watching** — Detects when you export market data in EVE Online and instantly processes it
