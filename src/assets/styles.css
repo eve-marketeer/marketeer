@@ -16,7 +16,7 @@
     --accent: oklch(0.2 0.02 260);
     --accent-foreground: oklch(0.95 0 0);
     --ring: oklch(0.5 0.15 195);
-    
+
     --sell: oklch(0.7 0.2 145);
     --sell-dim: oklch(0.5 0.15 145);
     --buy: oklch(0.75 0.18 55);
@@ -55,4 +55,3 @@ body {
 .tabular-nums {
     font-variant-numeric: tabular-nums;
 }
-

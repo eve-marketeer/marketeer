@@ -8,10 +8,10 @@ const BASE_URL: &str = "https://esi.evetech.net/latest";
 const CACHE_TTL: Duration = Duration::from_secs(3600); // 1 hour
 const DEFAULT_REGION_ID: i32 = 10000002; // The Forge (Jita's region)
 
-static TYPE_CACHE: Lazy<Mutex<HashMap<i32, CacheEntry<TypeInfo>>>> = 
+static TYPE_CACHE: Lazy<Mutex<HashMap<i32, CacheEntry<TypeInfo>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
-static HISTORY_CACHE: Lazy<Mutex<HashMap<i32, CacheEntry<Vec<MarketHistory>>>>> = 
+static HISTORY_CACHE: Lazy<Mutex<HashMap<i32, CacheEntry<Vec<MarketHistory>>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 struct CacheEntry<T> {
@@ -66,10 +66,10 @@ pub async fn get_type_info(type_id: i32) -> Option<TypeInfo> {
             }
         }
     }
-    
+
     // Fetch from API
     let url = format!("{}/universe/types/{}/", BASE_URL, type_id);
-    
+
     let client = reqwest::Client::new();
     let response = client
         .get(&url)
@@ -77,29 +77,32 @@ pub async fn get_type_info(type_id: i32) -> Option<TypeInfo> {
         .send()
         .await
         .ok()?;
-    
+
     if !response.status().is_success() {
         return None;
     }
-    
+
     let esi_type: EsiTypeResponse = response.json().await.ok()?;
-    
+
     let type_info = TypeInfo {
         type_id: esi_type.type_id,
         name: esi_type.name,
         description: clean_description(&esi_type.description),
         icon_url: format!("https://images.evetech.net/types/{}/icon?size=64", type_id),
     };
-    
+
     // Cache the result
     {
         let mut cache = TYPE_CACHE.lock();
-        cache.insert(type_id, CacheEntry {
-            data: type_info.clone(),
-            expires_at: Instant::now() + CACHE_TTL,
-        });
+        cache.insert(
+            type_id,
+            CacheEntry {
+                data: type_info.clone(),
+                expires_at: Instant::now() + CACHE_TTL,
+            },
+        );
     }
-    
+
     Some(type_info)
 }
 
@@ -113,12 +116,12 @@ pub async fn get_market_history(type_id: i32) -> Option<Vec<MarketHistory>> {
             }
         }
     }
-    
+
     let url = format!(
         "{}/markets/{}/history/?type_id={}",
         BASE_URL, DEFAULT_REGION_ID, type_id
     );
-    
+
     let client = reqwest::Client::new();
     let response = client
         .get(&url)
@@ -126,13 +129,13 @@ pub async fn get_market_history(type_id: i32) -> Option<Vec<MarketHistory>> {
         .send()
         .await
         .ok()?;
-    
+
     if !response.status().is_success() {
         return None;
     }
-    
+
     let esi_history: Vec<EsiHistoryResponse> = response.json().await.ok()?;
-    
+
     let history: Vec<MarketHistory> = esi_history
         .into_iter()
         .map(|h| MarketHistory {
@@ -144,19 +147,22 @@ pub async fn get_market_history(type_id: i32) -> Option<Vec<MarketHistory>> {
             volume: h.volume,
         })
         .collect();
-    
+
     // Get last 30 days
     let history: Vec<MarketHistory> = history.into_iter().rev().take(30).rev().collect();
-    
+
     // Cache the result
     {
         let mut cache = HISTORY_CACHE.lock();
-        cache.insert(type_id, CacheEntry {
-            data: history.clone(),
-            expires_at: Instant::now() + CACHE_TTL,
-        });
+        cache.insert(
+            type_id,
+            CacheEntry {
+                data: history.clone(),
+                expires_at: Instant::now() + CACHE_TTL,
+            },
+        );
     }
-    
+
     Some(history)
 }
 
@@ -165,4 +171,3 @@ fn clean_description(description: &str) -> String {
     let re = regex::Regex::new(r"<[^>]+>").unwrap();
     re.replace_all(description, "").to_string()
 }
-

@@ -1,5 +1,6 @@
-mod market;
+mod bulk_import;
 mod esi;
+mod market;
 mod watcher;
 
 use clipboard_rs::{Clipboard, ClipboardContext};
@@ -26,11 +27,11 @@ fn toggle_mode(app: AppHandle) -> MarketMode {
         MarketMode::Buy => MarketMode::Sell,
     };
     let new_mode = state.mode.clone();
-    
+
     if let Some(price) = state.get_active_price() {
         copy_to_clipboard_internal(price);
     }
-    
+
     let _ = app.emit("mode-changed", &new_mode);
     new_mode
 }
@@ -59,15 +60,29 @@ async fn fetch_price_history(type_id: i32) -> Vec<esi::MarketHistory> {
 }
 
 #[tauri::command]
+async fn bulk_undercut_items(text: String) -> Vec<bulk_import::BulkResult> {
+    bulk_import::bulk_undercut(text).await
+}
+
+#[tauri::command]
+fn copy_bulk_results(results: Vec<bulk_import::BulkResult>) -> bool {
+    let text = bulk_import::format_for_clipboard(&results);
+    if text.is_empty() {
+        return false;
+    }
+    bulk_import::copy_text_to_clipboard(text)
+}
+
+#[tauri::command]
 fn refresh_market_data(app: AppHandle) -> MarketData {
     let data = market::parse_latest_log();
     let mut state = MARKET_STATE.lock();
     state.data = data.clone();
-    
+
     if let Some(price) = state.get_active_price() {
         copy_to_clipboard_internal(price);
     }
-    
+
     let _ = app.emit("market-updated", &data);
     data
 }
@@ -81,23 +96,23 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let app_handle = app.handle().clone();
-            
+
             #[cfg(not(target_os = "macos"))]
             {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.set_decorations(false);
                 }
             }
-            
+
             // Start file watcher in background
             std::thread::spawn(move || {
                 watcher::start_watching(app_handle);
             });
-            
+
             // Parse initial data
             let data = market::parse_latest_log();
             MARKET_STATE.lock().data = data;
-            
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -108,6 +123,8 @@ pub fn run() {
             fetch_type_info,
             fetch_price_history,
             refresh_market_data,
+            bulk_undercut_items,
+            copy_bulk_results,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

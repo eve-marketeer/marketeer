@@ -9,7 +9,6 @@ A desktop market tool for EVE Online that automatically monitors your market exp
 
 <img width="1256" height="982" alt="Screenshot 2025-12-11 at 14 58 47" src="https://github.com/user-attachments/assets/dc43fd00-0205-4d24-acc2-584a02d3c846" />
 
-
 ## Features
 
 - **Automatic Market Log Watching** — Detects when you export market data in EVE Online and instantly processes it
@@ -32,12 +31,12 @@ A desktop market tool for EVE Online that automatically monitors your market exp
 
 Download the latest release for your platform from the [Releases](https://github.com/eve-marketeer/marketeer/releases) page.
 
-| Platform | Download |
-|----------|----------|
-| macOS (Apple Silicon) | `.dmg` |
-| macOS (Intel) | `.dmg` |
-| Windows | `.msi` or `.exe` |
-| Linux | `.deb` or `.AppImage` |
+| Platform              | Download              |
+| --------------------- | --------------------- |
+| macOS (Apple Silicon) | `.dmg`                |
+| macOS (Intel)         | `.dmg`                |
+| Windows               | `.msi` or `.exe`      |
+| Linux                 | `.deb` or `.AppImage` |
 
 ## Development
 
@@ -63,6 +62,7 @@ npm run tauri build
 ### Tech Stack
 
 **Frontend**
+
 - Vue 3 with Composition API
 - TypeScript
 - Tailwind CSS 4
@@ -70,6 +70,7 @@ npm run tauri build
 - Chart.js (price history visualization)
 
 **Backend**
+
 - Rust
 - Tauri 2
 - notify (file system watching)
@@ -80,16 +81,16 @@ npm run tauri build
 
 Marketeer reads market logs from EVE Online's default export location:
 
-| Platform | Path |
-|----------|------|
-| macOS | `~/Documents/EVE/logs/Marketlogs/` |
-| Windows | `%USERPROFILE%\Documents\EVE\logs\Marketlogs\` |
-| Linux | `~/Documents/EVE/logs/Marketlogs/` |
+| Platform | Path                                           |
+| -------- | ---------------------------------------------- |
+| macOS    | `~/Documents/EVE/logs/Marketlogs/`             |
+| Windows  | `%USERPROFILE%\Documents\EVE\logs\Marketlogs\` |
+| Linux    | `~/Documents/EVE/logs/Marketlogs/`             |
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
+| Shortcut       | Action                                    |
+| -------------- | ----------------------------------------- |
 | `Cmd/Ctrl + M` | Toggle between buy and sell mode (global) |
 
 ## License
