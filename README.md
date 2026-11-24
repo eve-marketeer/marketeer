@@ -1,98 +1,62 @@
 # Marketeer
 
-A desktop market tool for EVE Online that automatically monitors your market exports, calculates competitive prices, and copies them to your clipboard.
+A desktop market tool for EVE Online. It watches your market exports, works out the price that beats the best order, and puts it on your clipboard.
 
-![Tauri](https://img.shields.io/badge/Tauri-2.0-blue?logo=tauri)
-![Vue](https://img.shields.io/badge/Vue-3.5-green?logo=vuedotjs)
-![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![Marketeer](docs/screenshot.png)
 
-<img width="1256" height="982" alt="Screenshot 2025-12-11 at 14 58 47" src="https://github.com/user-attachments/assets/dc43fd00-0205-4d24-acc2-584a02d3c846" />
+## What it does
 
-## Features
+- Watches the Marketlogs folder and shows a new export the moment the game writes it
+- Undercuts the cheapest sell order or outbids the highest buy order by one tick (prices have four significant digits, so 12,340 moves by 10)
+- Copies that price, ready to paste into the order window
+- Switches between selling and buying with a global shortcut, `Ctrl+M` by default (`Cmd+M` on macOS), from inside the game
+- Shows the item's 30 day price history in The Forge and the ten best orders on each side
+- Prices a whole pasted list against Jita 4-4 (Bulk undercut)
+- Updates itself from GitHub releases
 
-- **Automatic Market Log Watching** — Detects when you export market data in EVE Online and instantly processes it
-- **Smart Price Adjustment** — Calculates the optimal undercut/overbid price based on EVE's minimum increment rules
-- **Clipboard Integration** — Automatically copies the adjusted price to your clipboard, ready to paste in-game
-- **Global Keyboard Shortcut** — Toggle between buy/sell mode with `Cmd+M` (macOS) or `Ctrl+M` (Windows/Linux), even when the app isn't focused
-- **Price History Charts** — View 30-day price trends from EVE's ESI API
-- **Order Book Display** — See the top 10 buy and sell orders at a glance
-- **Cross-Platform** — Works on macOS, Windows, and Linux
+## How to use it
 
-## How It Works
+1. Open the market in EVE Online and pick an item
+2. Click Export to File at the bottom of the market window
+3. Paste into the price field of your order
 
-1. Open the market for any item in EVE Online
-2. Click "Export to File" in the market window
-3. Marketeer automatically detects the new export and displays the market data
-4. The adjusted price is copied to your clipboard
-5. Paste directly into EVE's market order price field
+## Install
 
-## Installation
+Get the latest build from the [releases](https://github.com/eve-marketeer/marketeer/releases) page: a `-setup.exe` for Windows, a `.dmg` for macOS (Apple silicon or Intel), an `.AppImage` or `.deb` for Linux.
 
-Download the latest release for your platform from the [Releases](https://github.com/eve-marketeer/marketeer/releases) page.
+Code is not signed. Windows SmartScreen asks once ("More info", "Run anyway"). On macOS the first start is refused; allow it under System Settings, Privacy & Security, "Open Anyway".
 
-| Platform              | Download              |
-| --------------------- | --------------------- |
-| macOS (Apple Silicon) | `.dmg`                |
-| macOS (Intel)         | `.dmg`                |
-| Windows               | `.msi` or `.exe`      |
-| Linux                 | `.deb` or `.AppImage` |
+The installed exe, the `.app` and the AppImage update themselves. A `.deb` install is pointed at the release page instead.
 
-## Development
+## Where it looks
 
-### Prerequisites
+The export folder is found on its own, the first of these that exists:
 
-- [Node.js](https://nodejs.org/) (LTS)
-- [Rust](https://rustup.rs/) (stable)
-- [Tauri CLI](https://tauri.app/start/prerequisites/)
+- `Documents/EVE/logs/Marketlogs`
+- `OneDrive/Documents/EVE/logs/Marketlogs`
+- the macOS client's `Library/Application Support/EVE Online/p_drive/User/My Documents/EVE/logs/Marketlogs`
+- Steam's Proton prefix for EVE on Linux
 
-### Setup
+Set another one in Settings. Settings are kept in `marketeer/config.toml` in the system's config folder.
 
-```bash
-# Install dependencies
-npm install
+On Linux the global shortcut goes through X11. Under Wayland it fires while an X11 window has focus, which EVE under Proton is.
 
-# Run in development mode
-npm run tauri dev
+## Building
 
-# Build for production
-npm run tauri build
+```sh
+cargo run --release
 ```
 
-### Tech Stack
+It is a [GPUI](https://www.gpui.rs) app (through `gpui-kit`). Linux needs the usual libraries: on Debian or Ubuntu, `libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan-dev`.
 
-**Frontend**
+`cargo test -- --ignored` also runs the tests that talk to ESI.
 
-- Vue 3 with Composition API
-- TypeScript
-- Tailwind CSS 4
-- Pinia (state management)
-- Chart.js (price history visualization)
+## Releasing
 
-**Backend**
+Bump `version` in `Cargo.toml`, merge, then push that commit to the `release` branch. CI (`.github/workflows/release.yml`) builds and packages every platform with cargo-packager and creates a draft release `marketeer-v<version>`. Publishing the draft is what offers the update to everyone: the app reads `latest.json` from the latest published release.
 
-- Rust
-- Tauri 2
-- notify (file system watching)
-- reqwest (ESI API calls)
-- clipboard-rs (clipboard access)
-
-## Configuration
-
-Marketeer reads market logs from EVE Online's default export location:
-
-| Platform | Path                                           |
-| -------- | ---------------------------------------------- |
-| macOS    | `~/Documents/EVE/logs/Marketlogs/`             |
-| Windows  | `%USERPROFILE%\Documents\EVE\logs\Marketlogs\` |
-| Linux    | `~/Documents/EVE/logs/Marketlogs/`             |
-
-## Keyboard Shortcuts
-
-| Shortcut       | Action                                    |
-| -------------- | ----------------------------------------- |
-| `Cmd/Ctrl + M` | Toggle between buy and sell mode (global) |
+Update bundles are signed. The key pair lives in the repository's `UPDATER_PRIVATE_KEY` and `UPDATER_PRIVATE_KEY_PASSWORD` secrets and the `UPDATER_PUBKEY` variable (`cargo packager signer generate` makes one). Losing the private key means existing installs can no longer update themselves, so keep a copy somewhere safe.
 
 ## License
 
-MIT
+MIT. Inter is bundled under the OFL (`assets/fonts/OFL-Inter.txt`).

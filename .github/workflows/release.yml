@@ -1,63 +1,204 @@
-name: 'publish'
+name: Release
 
+# Push to the `release` branch (or run by hand) to build every package into a draft
+# release for the version in Cargo.toml. Publishing the draft makes it the update
+# everyone gets: the app reads latest.json from the latest published release.
+#
+# Packages are cargo-packager's: an NSIS setup for Windows, a DMG for macOS, an AppImage
+# and a .deb for Linux. The update bundles are signed with UPDATER_PRIVATE_KEY and listed
+# in latest.json; UPDATER_PUBKEY is compiled in to check them. Code is not signed (macOS
+# gets an ad-hoc signature), so SmartScreen and Gatekeeper ask before the first start.
 on:
   workflow_dispatch:
   push:
-    branches:
-      - release
+    branches: [release]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  publish-tauri:
-    permissions:
-      contents: write
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    env:
+      # Compiled in, so the app can check an update's signature.
+      MARKETEER_UPDATER_PUBKEY: ${{ vars.UPDATER_PUBKEY }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04'
-            args: ''
-          - platform: 'windows-latest'
-            args: ''
-
-    runs-on: ${{ matrix.platform }}
+          # The oldest supported Ubuntu, so the binary runs on distros with an older glibc.
+          - target: linux-x86_64
+            runner: ubuntu-22.04
+            triple: x86_64-unknown-linux-gnu
+          - target: windows-x86_64
+            runner: windows-latest
+            triple: x86_64-pc-windows-msvc
+          - target: macos-aarch64
+            runner: macos-latest
+            triple: aarch64-apple-darwin
+          # Intel Macs are cross-compiled on the Apple silicon runner.
+          - target: macos-x86_64
+            runner: macos-latest
+            triple: x86_64-apple-darwin
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.triple }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
+      # GPUI's windowing and fonts on Linux.
+      - name: System libraries
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
+            libxcb1-dev libfontconfig-dev libfreetype-dev libvulkan-dev libfuse2
 
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
+      - name: Version
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=marketeer-v$version" >> "$GITHUB_ENV"
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.triple }}
 
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
+      # Built from crates.io, since it handles the signing key.
+      - name: Install cargo-packager
+        run: cargo install cargo-packager --version 0.11.8 --locked
 
-      - name: install frontend dependencies
-        run: npm install
-
-      - uses: tauri-apps/tauri-action@v0
+      - name: Package
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NAME: marketeer-${{ matrix.target }}
+          CARGO_BUILD_TARGET: ${{ matrix.triple }}
+          # The AppImage tooling is an AppImage itself, and runners have no FUSE mount.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          SIGNING_KEY: ${{ secrets.UPDATER_PRIVATE_KEY }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.UPDATER_PRIVATE_KEY_PASSWORD }}
+        run: |
+          case "$RUNNER_OS" in
+            Linux) formats=appimage,deb ;;
+            Windows) formats=nsis ;;
+            macOS) formats=app,dmg ;;
+          esac
+          # The signature is what makes a bundle an update.
+          if [ -n "$SIGNING_KEY" ]; then
+            export CARGO_PACKAGER_SIGN_PRIVATE_KEY="$SIGNING_KEY"
+            export CARGO_PACKAGER_SIGN_PRIVATE_KEY_PASSWORD="$SIGNING_KEY_PASSWORD"
+          else
+            echo "::warning::UPDATER_PRIVATE_KEY is not set: this release cannot be installed by the app's updater"
+          fi
+          # macOS signing asks Apple's timestamp server, which sometimes doesn't answer.
+          for attempt in 1 2 3; do
+            cargo packager --release --target ${{ matrix.triple }} --formats "$formats" --out-dir packages && break
+            [ "$attempt" = 3 ] && exit 1
+            sleep 20
+          done
+          ls -la packages
+
+          mkdir -p dist
+          # One name per platform, so the download links in latest.json are predictable.
+          put() { cp "$1" "dist/$2"; [ -f "$1.sig" ] && cp "$1.sig" "dist/$2.sig"; true; }
+          case "$RUNNER_OS" in
+            Linux)
+              put "$(ls packages/*.AppImage)" "$NAME.AppImage"
+              put "$(ls packages/*.deb)" "$NAME.deb"
+              bundle="$NAME.AppImage"; format=appimage
+              ;;
+            Windows)
+              put "$(ls packages/*-setup.exe)" "$NAME-setup.exe"
+              bundle="$NAME-setup.exe"; format=nsis
+              ;;
+            macOS)
+              put "$(ls packages/*.dmg)" "$NAME.dmg"
+              # The signer packs the .app into a tarball for the updater.
+              if [ -f packages/Marketeer.app.tar.gz ]; then
+                put packages/Marketeer.app.tar.gz "$NAME.app.tar.gz"
+              fi
+              bundle="$NAME.app.tar.gz"; format=app
+              ;;
+          esac
+
+          if [ -n "$SIGNING_KEY" ]; then
+            if [ ! -f "dist/$bundle.sig" ]; then
+              echo "::error::no signed update bundle for ${{ matrix.target }}"
+              exit 1
+            fi
+            url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$bundle"
+            jq -n --rawfile sig "dist/$bundle.sig" --arg url "$url" --arg format "$format" \
+              '{signature: ($sig | rtrimstr("\n")), url: $url, format: $format}' \
+              > "dist/updater-${{ matrix.target }}.json"
+          fi
+          ls -la dist
+
+      - uses: actions/upload-artifact@v7
         with:
-          tagName: marketeer-v__VERSION__
-          releaseName: 'Marketeer v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+          name: marketeer-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Version
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=marketeer-v$version" >> "$GITHUB_ENV"
+
+      # What the app reads to update itself: every platform's signed bundle.
+      - name: Update manifest
+        working-directory: dist
+        run: |
+          if ! ls updater-*.json > /dev/null 2>&1; then
+            echo "::warning::no signed bundles, so no latest.json"
+            exit 0
+          fi
+          jq -n --arg version "$VERSION" \
+            --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{version: $version, pub_date: $date, platforms: (reduce inputs as $p ({}; . + $p))}' \
+            $(for f in updater-*.json; do
+                key="${f#updater-}"; key="${key%.json}"
+                jq -c --arg k "$key" '{($k): .}' "$f" > "platform-$key.json"
+                echo "platform-$key.json"
+              done) > latest.json
+          rm -f updater-*.json platform-*.json
+          cat latest.json
+
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum marketeer-* > SHA256SUMS
+          cat SHA256SUMS
+
+      # A draft: nobody is offered the update until it is published. Running again for
+      # the same version replaces the draft, never a published release.
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)" = "false" ]; then
+            echo "::error::$TAG is already published; bump the version in Cargo.toml"
+            exit 1
+          fi
+          gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Marketeer v$VERSION" \
+            --draft --generate-notes
