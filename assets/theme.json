@@ -1,0 +1,53 @@
+{
+  "name": "Marketeer",
+  "author": "Marketeer",
+  "themes": [
+    {
+      "name": "Marketeer Dark",
+      "mode": "dark",
+      "font.family": "Inter",
+      "font.size": 14,
+      "radius": 6,
+      "radius.lg": 10,
+      "shadow": false,
+      "colors": {
+        "background": "#07090d",
+        "foreground": "#eeeeee",
+        "border": "#ffffff14",
+        "input.border": "#ffffff1f",
+        "ring": "#30bd44",
+        "caret": "#eeeeee",
+        "primary.background": "#30bd44",
+        "primary.hover.background": "#3fcb53",
+        "primary.active.background": "#27a539",
+        "primary.foreground": "#04130a",
+        "secondary.background": "#11161f",
+        "secondary.hover.background": "#171b22",
+        "secondary.active.background": "#0d1118",
+        "secondary.foreground": "#eeeeee",
+        "muted.background": "#171b22",
+        "muted.foreground": "#8f8f8f",
+        "accent.background": "#11161f",
+        "accent.foreground": "#eeeeee",
+        "danger.background": "#ff6467",
+        "danger.foreground": "#ff6467",
+        "success.background": "#30bd44",
+        "success.foreground": "#30bd44",
+        "warning.background": "#ff8918",
+        "warning.foreground": "#ff8918",
+        "popover.background": "#090d14",
+        "popover.foreground": "#eeeeee",
+        "list.background": "#07090d",
+        "list.active.background": "#30bd4424",
+        "list.active.border": "#30bd44",
+        "selection.background": "#30bd444d",
+        "title_bar.background": "#07090d",
+        "title_bar.border": "#1c222b",
+        "window.border": "#1c222b",
+        "scrollbar.background": "#00000000",
+        "scrollbar.thumb.background": "#ffffff24",
+        "scrollbar.thumb.hover.background": "#ffffff3a"
+      }
+    }
+  ]
+}

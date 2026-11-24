@@ -1,0 +1,108 @@
+[package]
+name = "marketeer"
+version = "0.3.0"
+edition = "2024"
+description = "Market tool for EVE Online: watches market exports and puts the price to beat on your clipboard"
+license = "MIT"
+repository = "https://github.com/eve-marketeer/marketeer"
+publish = false
+
+[dependencies]
+arboard = { version = "3.7", default-features = false, features = ["wayland-data-control"] }
+cargo-packager-updater = "0.2"
+dirs = "6"
+global-hotkey = "0.9"
+gpui-kit = "0.7.3"
+notify = "8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.9"
+ureq = { version = "3.4", features = ["json", "platform-verifier"] }
+
+[build-dependencies]
+winresource = { version = "0.1", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+strip = true
+lto = "thin"
+
+# GPUI is far too slow unoptimised
+[profile.dev.package."*"]
+opt-level = 2
+
+# cargo-packager, run by CI after the release build (.github/workflows/release.yml).
+[package.metadata.packager]
+product-name = "Marketeer"
+identifier = "com.timkunze.marketeer"
+category = "Utility"
+description = "Market tool for EVE Online"
+homepage = "https://github.com/eve-marketeer/marketeer"
+icons = [
+    "assets/icons/32x32.png",
+    "assets/icons/128x128.png",
+    "assets/icons/128x128@2x.png",
+    "assets/icons/icon.png",
+    "assets/icon.icns",
+    "assets/icon.ico",
+]
+
+# Ad-hoc: Apple silicon will not run unsigned code at all.
+[package.metadata.packager.macos]
+signing-identity = "-"
+
+[package.metadata.packager.deb]
+# libvulkan1 is loaded at runtime, the rest is linked
+depends = ["libxcb1", "libxkbcommon0", "libxkbcommon-x11-0", "libvulkan1"]
+
+[package.metadata.packager.nsis]
+installer-icon = "assets/icon.ico"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+unwrap_used = "warn"
+expect_used = "allow"
+panic_in_result_fn = "warn"
+
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+
+undocumented_unsafe_blocks = "warn"
+multiple_unsafe_ops_per_block = "warn"
+
+fn_params_excessive_bools = "warn"
+struct_excessive_bools = "warn"
+clone_on_ref_ptr = "warn"
+redundant_clone = "warn"
+rc_buffer = "warn"
+
+string_add = "warn"
+wildcard_imports = "warn"
+
+dbg_macro = "warn"
+todo = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+
+as_conversions = "warn"
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"
+
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+module_inception = "allow"
+enum_glob_use = "allow"
+doc_markdown = "allow"
+unreadable_literal = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
