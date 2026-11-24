@@ -122,8 +122,7 @@ impl Marketeer {
                 .default_value(
                     logs_dir
                         .as_ref()
-                        .map(|p| p.display().to_string())
-                        .unwrap_or_default(),
+                        .map_or_default(|p| p.display().to_string()),
                 )
         });
         let bulk_input = cx.new(|cx| {
@@ -454,7 +453,7 @@ impl Marketeer {
 
     /// Ctrl or Cmd with 1, 2 or 3 opens that page.
     fn page_key(&mut self, event: &KeyDownEvent, cx: &mut Context<'_, Self>) {
-        if !event.keystroke.modifiers.secondary() {
+        if !event.keystroke.modifiers.secondary(cx) {
             return;
         }
         let page = match event.keystroke.key.as_str() {
